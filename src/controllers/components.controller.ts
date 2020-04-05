@@ -1,6 +1,7 @@
 import { ParameterizedContext } from "koa";
 
-import Component from "../models/component";
+import { Status } from "../models/status.enum";
+import Component, { ComponentModel } from "../models/component.model";
 
 export const findAll = async (ctx: ParameterizedContext) => {
   const components = await Component.find();
@@ -59,5 +60,50 @@ export const deleteById = async (ctx: ParameterizedContext) => {
   } catch (error) {
     ctx.body = error;
     ctx.status = 400;
+  }
+};
+
+const updateComponent = (update: any, component: ComponentModel) => {
+  if (update.name) {
+    component.name = update.name;
+  }
+  if (update.description) {
+    component.description = update.description;
+  }
+  if (update.status) {
+    component.status = update.status;
+  }
+};
+
+export const update = async (ctx: ParameterizedContext) => {
+  const { id } = ctx.params;
+  try {
+    const component = await Component.findById(id);
+    if (component) {
+      const componentUpdate = ctx.request.body;
+      updateComponent(componentUpdate, component);
+      const updatedComponent = await component.save();
+      ctx.body = updatedComponent;
+    } else {
+      ctx.body = "ID not found.";
+      ctx.status = 404;
+    }
+  } catch (error) {
+    ctx.body = error;
+    ctx.status = 400;
+  }
+};
+
+export const updateStatus = async (status: Status, id: string) => {
+  try {
+    const component = await Component.findById(id);
+    if (component) {
+      component.status = status;
+      await component.save();
+      return "ok";
+    }
+    return "Component not found.";
+  } catch (error) {
+    return error;
   }
 };
